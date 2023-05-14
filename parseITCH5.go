@@ -14,12 +14,20 @@ import (
 	"path"
 	"strings"
 	"time"
+    "math/big"
 )
 
 func check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+func min(x, y int) int {
+    if x < y {
+        return x
+    }
+    return y
 }
 
 func main() {
@@ -192,7 +200,7 @@ func main() {
 				stock := strings.TrimSpace(string(message[11:19]))
 				tradingState := message[19]
 				reserved := message[20]
-				reason := string(message[21:25])
+				reason := string(message[21:min(25,len(message))])
 				_, err = fmt.Fprintf(fOutput[t],
 					"%c,%d,%d,%d.%09d,%s,%c,%c,%s\n",
 					t, stockLocate, trackingNumber,
@@ -207,13 +215,13 @@ func main() {
 				message[3] = 0
 				message[4] = 0
 				timestamp := binary.BigEndian.Uint64(message[3:11])
-				stock := strings.TrimSpace(string(message[11:19]))
-				regSHOAction := message[19]
+				stock := strings.TrimSpace(string(message[11:min(19, len(message))]))
+				// regSHOAction := message[19]
 				_, err = fmt.Fprintf(fOutput[t],
 					"%c,%d,%d,%d.%09d,%s,%c\n",
 					t, locateCode, trackingNumber,
 					timestamp/1000000000, timestamp%1000000000,
-					stock, regSHOAction)
+					stock, "NO INFO")
 				check(err)
 			}
 		case 'L':
@@ -300,14 +308,14 @@ func main() {
 				stock := strings.TrimSpace(string(message[11:19]))
 				acrp := binary.BigEndian.Uint32(message[19:23])
 				uacp := binary.BigEndian.Uint32(message[23:27])
-				lacp := binary.BigEndian.Uint32(message[27:31])
-				auctionCollarExtension := binary.BigEndian.Uint32(message[31:35])
+				lacp := int(big.NewInt(0).SetBytes(message[27:min(31,len(message))]).Uint64())
+				// auctionCollarExtension := binary.BigEndian.Uint32(message[31:35])
 				_, err = fmt.Fprintf(fOutput[t],
 					"%c,%d,%d,%d.%09d,%s,%d.%04d,%d.%04d,%d.%04d,%d\n",
 					t, stockLocate, trackingNumber,
 					timestamp/1000000000, timestamp%1000000000, stock,
 					acrp/10000, acrp%10000, uacp/10000, uacp%10000,
-					lacp/10000, lacp%10000, auctionCollarExtension)
+					lacp/10000, lacp%10000, "NO INFO")
 				check(err)
 			}
 		case 'h':
@@ -335,10 +343,10 @@ func main() {
 				message[4] = 0
 				timestamp := binary.BigEndian.Uint64(message[3:11])
 				orderReferenceNumber := binary.BigEndian.Uint64(message[11:19])
-				buySellIndicator := message[19]
+				buySellIndicator := strings.TrimSpace(string(message[19:20]))
 				shares := binary.BigEndian.Uint32(message[20:24])
 				stock := strings.TrimSpace(string(message[24:32]))
-				price := binary.BigEndian.Uint32(message[32:36])
+				price := int(big.NewInt(0).SetBytes(message[32:min(36,len(message))]).Uint64())
 				_, err = fmt.Fprintf(fOutput[t],
 					"%c,%d,%d,%d.%09d,%d,%c,%d,%s,%d.%04d\n",
 					t, stockLocate, trackingNumber,
@@ -359,7 +367,7 @@ func main() {
 				shares := binary.BigEndian.Uint32(message[20:24])
 				stock := strings.TrimSpace(string(message[24:32]))
 				price := binary.BigEndian.Uint32(message[32:36])
-				attribution := string(message[36:40])
+				attribution := string(message[36:min(40,len(message))])
 				_, err = fmt.Fprintf(fOutput[t],
 					"%c,%d,%d,%d.%09d,%d,%c,%d,%s,%d.%04d,%s\n",
 					t, stockLocate, trackingNumber,
@@ -487,15 +495,15 @@ func main() {
 				shares := binary.BigEndian.Uint64(message[11:19])
 				stock := strings.TrimSpace(string(message[19:27]))
 				crossPrice := binary.BigEndian.Uint32(message[27:31])
-				matchNumber := binary.BigEndian.Uint64(message[31:39])
-				crossType := message[39]
+				matchNumber := int(big.NewInt(0).SetBytes(message[31:min(39, len(message))]).Uint64())
+				// crossType := message[39]
 				_, err = fmt.Fprintf(fOutput[t],
 					"%c,%d,%d,%d.%09d,%d,%s,%d.%04d,%d,%c\n",
 					t, stockLocate, trackingNumber,
 					timestamp/1000000000, timestamp%1000000000,
 					shares, stock,
 					crossPrice/10000, crossPrice%10000,
-					matchNumber, crossType)
+					matchNumber, "NO INFO")
 				check(err)
 			}
 		case 'B':
@@ -505,7 +513,7 @@ func main() {
 				message[3] = 0
 				message[4] = 0
 				timestamp := binary.BigEndian.Uint64(message[3:11])
-				matchNumber := binary.BigEndian.Uint64(message[11:19])
+				matchNumber := int(big.NewInt(0).SetBytes(message[11:min(19, len(message))]).Uint64())
 				_, err = fmt.Fprintf(fOutput[t],
 					"%c,%d,%d,%d.%09d,%d\n",
 					t, stockLocate, trackingNumber,
